@@ -7,7 +7,7 @@
 ## 示例
 ![图片](/img/a.png)
 
-实际应用案例：[聚在工大](https://github.com/Chiu-xaH/HFUT-Schedule/releases)中安装最新版本的近期旧版本的**ARM64位**APK，在APP内即可使用增量更新
+实际应用案例：[聚在工大](https://github.com/Chiu-xaH/HFUT-Schedule/releases)中安装最新版本的近期旧版本的**ARM64位**APK，在APP内即可使用增量更新，[视频演示](/img/example.mp4)
 
 ## 引入
 在settings.gradle添加
@@ -68,6 +68,8 @@ BsdiffUpdate单例类中开放了三个函数，分别是
 fun installNewApk(context: Context,authority : String = ".provider")
 // 清除Android/data目录下的缓存APK
 fun deleteCache(context: Context) : Boolean
+// 判断 内部存储/Download 是否存在某文件，存在则返回其路径
+fun isExistFile(fileName : String) : String?
 // 合并并安装 patchFileName为补丁文件名，直接以工具生成的补丁文件名 旧versionName_to_新versionName.patch
 fun mergePatchApk(context: Context, 
                   patch : Patch,
