@@ -70,17 +70,14 @@ object BsdiffUpdate {
         context.startActivity(intent)
     }
     @JvmStatic
-    private fun isExistPatch(patchFileName : String) : String? {
+    fun isExistFile(fileName : String) : String? {
         // 判断内部存储的文件下载文件夹是否存在此文件
-        // 获取Download目录
-        val downloadDir = getDownloadDirectory()
-        if (downloadDir != null) {
-            // 拼接文件名
-            val patchFile = File(downloadDir,patchFileName)
-            return patchFile.absolutePath
-        } else {
-            return null
-        }
+        // 获取 Download 目录
+        val downloadDir = getDownloadDirectory() ?: return null
+        // 拼接文件路径
+        val patchFile = File(downloadDir, fileName)
+        // 检查文件是否存在
+        return if (patchFile.exists()) patchFile.absolutePath else null
     }
     // 用于清理缓存APK
     @JvmStatic
@@ -108,7 +105,7 @@ object BsdiffUpdate {
         }
         val patchFileName = parsePatch(patch)
         // 下载好的补丁包 规定以 BsdiffTool生成的文件 为名称 "${oldVersion}_to_${newVersion}.patch"
-        val patchFile = isExistPatch(patchFileName) ?: return false
+        val patchFile = isExistFile(patchFileName) ?: return false
         // 开始加载
         onLoad(true)
         bsdiff.merge(oldPath, patchFile,newFile)
