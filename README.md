@@ -7,6 +7,8 @@
 ## 示例
 ![图片](/img/a.png)
 
+实际应用案例：[聚在工大](https://github.com/Chiu-xaH/HFUT-Schedule/releases)中安装最新版本的近期旧版本的**ARM64位**APK，在APP内即可使用增量更新
+
 ## 引入
 在settings.gradle添加
 ```Groovy
