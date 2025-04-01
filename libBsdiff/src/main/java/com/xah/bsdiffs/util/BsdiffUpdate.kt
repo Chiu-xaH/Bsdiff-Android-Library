@@ -1,10 +1,13 @@
-package com.xah.bsdiffs
+package com.xah.bsdiffs.util
 
 import android.content.Context
 import android.content.Intent
 import android.os.Environment
 import androidx.core.content.FileProvider
+import com.xah.bsdiffs.jni.BsdiffJNI
 import com.xah.bsdiffs.model.Patch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -89,35 +92,32 @@ object BsdiffUpdate {
         return deleteFile(newFile) && deleteFile(oldPath)
     }
     // 从 内部存储/Download 中打开patchFileName的补丁包，进行合并和安装
-    fun mergePatchApk(
+    suspend fun mergePatchApk(
         context: Context,
         patch : Patch,
-        onSuccess : () -> Unit = { installNewApk(context) },
-        onLoad : (Boolean) -> Unit
-    ) : Boolean {
+        onSuccess : () -> Unit = { installNewApk(context) }
+    ) : Boolean = withContext(Dispatchers.IO) {
         val downloadDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
         val packageName = getPackageName(context)
         val newFile = "$downloadDir/${packageName}_new.apk"
         // 自己本体安装包
         val oldPath ="$downloadDir/${packageName}_old.apk"
         if(!getAPK(context,oldPath)) {
-            return false
+            return@withContext false
         }
         val patchFileName = parsePatch(patch)
-        // 下载好的补丁包 规定以 BsdiffTool生成的文件 为名称 "${oldVersion}_to_${newVersion}.patch"
-        val patchFile = isExistFile(patchFileName) ?: return false
+        // 下载好的补丁包
+        val patchFile = isExistFile(patchFileName) ?: return@withContext false
         // 开始加载
-        onLoad(true)
         bsdiff.merge(oldPath, patchFile,newFile)
         // 清理缓存:即旧文件和补丁包
         deleteFile(oldPath)
         // 结束加载
-        onLoad(false)
         // 插入操作 例如默认安装新的安装包
         onSuccess()
         // 安装好再清理补丁
         deleteFile(patchFile)
-        return true
+        return@withContext true
         // 自行检查是否包体完整
     }
 }

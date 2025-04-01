@@ -1,4 +1,4 @@
-package com.xah.bsdiffs
+package com.xah.bsdiffs.util
 
 import com.xah.bsdiffs.model.Patch
 

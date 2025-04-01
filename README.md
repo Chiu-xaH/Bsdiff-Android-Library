@@ -33,6 +33,9 @@ if (patchItem != null) {
 
 @Composable
 fun PatchUpdateUI(patch: Patch) {
+    val coroutineScope = rememberCoroutineScope()
+    val activity = LocalActivity.current
+    val context = LocalContext.current // 或者直接传给全局的context也行
     // 下载界面
     Button(onClick = {
         // 从云端下载对应补丁包,这里自己搞DownloadManager即可
@@ -47,14 +50,17 @@ fun PatchUpdateUI(patch: Patch) {
     var loading by remember { mutableStateOf(false) }
     // 当APP已经将补丁包下载到 内部存储/Download 文件夹完成后
     if (loading) {
-        // 合并补丁中
+        // 合并补丁中  显示加载页面
         LoadingUI()
     } else {
         // 展示按钮
         Button(onClick = {
-            checkStroagePermission()
-            // patch是此依赖定义的数据类，
-            BsdiffUpdate.mergePatchApk(context,patch) { loading = it }
+            coroutineScope.launch {
+                async { activity?.let { checkStroagePermission(it) } }.await()
+                async { loading = true }.await()
+                async { BsdiffUpdate.mergePatchApk(context,patch) }.await()
+                launch { loading = false }
+            }
         }) {
             Text("安装更新")
         }
