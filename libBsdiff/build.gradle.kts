@@ -52,7 +52,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "com.xah.bsdiffs"
             artifactId = "library"
-            version = "1.0"
+            version = "1.0.1.2"
 
             afterEvaluate {
                 from(components["release"])

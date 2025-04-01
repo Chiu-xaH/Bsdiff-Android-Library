@@ -68,7 +68,7 @@ fun PatchUpdateUI(patch: Patch) {
 }
 ```
 ## 内容
-BsdiffUpdate单例类中开放了三个函数，分别是
+BsdiffUpdate单例类中开放了四个函数，分别是
 ```Kotlin
 // 安装合成好的APK
 fun installNewApk(context: Context,authority : String = ".provider")
