@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Environment
 import androidx.core.content.FileProvider
-import com.xah.bsdiffs.jni.BsdiffJNI
+import com.xah.bsdiffs.BsdiffJNI
 import com.xah.bsdiffs.model.Patch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
