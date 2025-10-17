@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -47,14 +47,14 @@ dependencies {
     implementation(libs.androidx.core)
 }
 
-publishing {
-    publications {
-        register<MavenPublication>("release") {
-            groupId = "com.xah.bsdiffs"
-            artifactId = "library"
-            version = "1.0.1.2"
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                groupId = "com.xah.bsdiffs"
+                artifactId = "library"
+                version = "1.0.3"
 
-            afterEvaluate {
                 from(components["release"])
             }
         }
