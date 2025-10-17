@@ -1,4 +1,4 @@
-# Bsdiff-Lib    [![](https://jitpack.io/v/Chiu-xaH/Bsdiff-Lib.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Lib)
+# Bsdiff-Android-Library   [![](https://jitpack.io/v/Chiu-xaH/Bsdiff-Android-Library.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
 
 适用于Android的库，集成了增量更新功能，需要开发者将生成的补丁包，推送给用户下载，下载到 内部存储/Download文件夹 后，调用mergePatchApk即可完成合并及其安装
 
