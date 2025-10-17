@@ -17,7 +17,7 @@ maven { url 'https://jitpack.io' }
 
 添加依赖，版本以Tag为准
 ```Groovy
-implementation("com.github.Chiu-xaH:Bsdiff-Lib:版本")
+implementation("com.github.Chiu-xaH:Bsdiff-Android-Library:1.0.3")
 ```
 ## 使用
 这是一个示例代码，当点击按钮后即可开始合并补丁并跳转安装，**提前注意存储权限的获取**
