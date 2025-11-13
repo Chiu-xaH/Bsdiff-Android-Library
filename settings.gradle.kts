@@ -20,4 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Bsdiff-NDK"
-include(":libBsdiff")
+include(":patch")
+include(":testapp")
