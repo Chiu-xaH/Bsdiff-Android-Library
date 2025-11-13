@@ -1,4 +1,4 @@
-package com.xah.bsdiffs
+package com.xah.bsdiffs.util
 
 class BsdiffJni {
     companion object {

@@ -1,4 +1,4 @@
-package com.xah.bsdiffs.model
+package com.xah.bsdiffs.patch.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

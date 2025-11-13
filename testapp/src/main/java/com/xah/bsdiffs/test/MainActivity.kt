@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.xah.bsdiffs.PatchUpdate
+import com.xah.bsdiffs.patch.DiffWithMetaUpdate
 import com.xah.bsdiffs.test.ui.theme.BsdiffLibTheme
 import kotlinx.coroutines.launch
 import java.io.File
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                                     val patchFile = uriToFile(context, uri)
                                     patchFile?.let {
                                         scope.launch {
-                                            PatchUpdate().mergeCallback(it, context)
+                                            DiffWithMetaUpdate().mergeCallback(it, context)
                                         }
                                     }
                                 } else {

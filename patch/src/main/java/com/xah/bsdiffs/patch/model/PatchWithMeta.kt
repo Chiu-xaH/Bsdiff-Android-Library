@@ -1,9 +1,9 @@
-package com.xah.bsdiffs.model
+package com.xah.bsdiffs.patch.model
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Patch(
+data class PatchWithMeta(
     val source : PatchMeta,
     val target : PatchMeta
 )

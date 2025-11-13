@@ -53,7 +53,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 groupId = "com.xah.bsdiffs"
                 artifactId = "library"
-                version = "2.0-alpha01"
+                version = "2.0-alpha02"
 
                 from(components["release"])
             }
