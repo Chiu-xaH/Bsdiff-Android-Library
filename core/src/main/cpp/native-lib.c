@@ -2,7 +2,7 @@
 #include "main.h"
 
 JNIEXPORT jint JNICALL
-Java_com_xah_bsdiffs_BsdiffJni_patch
+Java_com_bsdiff_core_BsdiffJni_patch
         (JNIEnv *env, jobject obj, jstring oldFilePath, jstring newFilePath, jstring patchFilePath) {
     // 将Java的jstring转换为C字符串
     const char* oldFile = (*env)->GetStringUTFChars(env, oldFilePath, NULL);
@@ -20,7 +20,7 @@ Java_com_xah_bsdiffs_BsdiffJni_patch
 }
 
 JNIEXPORT jint JNICALL
-Java_com_xah_bsdiffs_BsdiffJni_merge
+Java_com_bsdiff_core_BsdiffJni_merge
         (JNIEnv *env, jobject obj, jstring oldFilePath, jstring patchFilePath, jstring newFilePath) {
     // 将Java的jstring转换为C字符串
     const char* oldFile = (*env)->GetStringUTFChars(env, oldFilePath, NULL);

@@ -1,4 +1,4 @@
-package com.xah.bsdiffs.util
+package com.bsdiff.core
 
 class BsdiffJni {
     companion object {
@@ -6,7 +6,7 @@ class BsdiffJni {
             System.loadLibrary("bsdiff")
         }
     }
-
+    // 0为成功 具体见源码
     external fun patch(oldFilePath: String, newFilePath: String, patchFilePath: String) : Int
     external fun merge(oldFilePath: String, patchFilePath: String, newFilePath: String) : Int
 }

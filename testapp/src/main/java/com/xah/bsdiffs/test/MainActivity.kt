@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.xah.bsdiffs.patch.DiffWithMetaUpdate
+import com.xah.bsdiffs.meta.DiffWithMetaUpdate
 import com.xah.bsdiffs.test.ui.theme.BsdiffLibTheme
 import kotlinx.coroutines.launch
 import java.io.File
