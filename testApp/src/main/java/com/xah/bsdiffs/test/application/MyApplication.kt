@@ -1,4 +1,4 @@
-package com.xah.bsdiffs.test
+package com.xah.bsdiffs.test.application
 
 import android.app.Application
 import android.content.Context

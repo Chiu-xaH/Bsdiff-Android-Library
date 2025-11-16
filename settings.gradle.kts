@@ -21,6 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Bsdiff-NDK"
 include(":patch")
-include(":testapp")
+include(":testApp")
 include(":core")
 include(":download")

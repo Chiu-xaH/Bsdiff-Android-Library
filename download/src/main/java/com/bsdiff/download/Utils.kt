@@ -4,15 +4,19 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -38,7 +42,6 @@ suspend fun getFileSize(
 }
 
 
-// 下载文件，返回进度 0..100
 fun downloadFile(
     context: Context,
     url: String,
@@ -46,34 +49,36 @@ fun downloadFile(
     delayTimesLong: Long = 1000L,
     requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
     customDownloadId: Long? = null
-): Flow<DownloadProgress> = flow {
+): Flow<DownloadResult> = flow {
     val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    // 下载到Download
-    val destDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+    val destDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
     if (!destDir.exists()) {
         destDir.mkdirs()
     }
-    // 移除已有文件
+
     val destFile = File(destDir, fileName)
+
     if (destFile.exists()) {
-        destFile.delete()
+        // 下载过
+        emit(DownloadResult.Downloaded(destFile))
+        return@flow
     }
 
     var request = DownloadManager.Request(url.toUri())
         .setTitle(fileName)
-        .setDescription("Downloading $fileName")
+        .setDescription("下载 $fileName")
         .setDestinationUri(Uri.fromFile(destFile))
         .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+        .addRequestHeader("Range", "bytes=0-")
 
-    // 开发者自定义Request
     request = requestBuilder(request)
-    // 自定义ID或默认分配 开发者持有ID可自定义更多操作
+
     val downloadId = customDownloadId ?: downloadManager.enqueue(request)
 
     val query = DownloadManager.Query().setFilterById(downloadId)
+
     var downloading = true
-    // 轮询进度
     while (downloading) {
         val cursor = downloadManager.query(query)
         if (cursor != null && cursor.moveToFirst()) {
@@ -82,21 +87,43 @@ fun downloadFile(
 
             if (bytesTotal > 0) {
                 val progress = (bytesDownloaded * 100 / bytesTotal).toInt()
-                emit(DownloadProgress(downloadId, progress))
+                emit(DownloadResult.Progress(downloadId, progress))
             }
 
-            val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-            if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                emit(DownloadProgress(downloadId, 100))
-                downloading = false
-            } else if (status == DownloadManager.STATUS_FAILED) {
-                downloading = false
-                throw IOException("Download failed for $url")
+            when (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
+                DownloadManager.STATUS_SUCCESSFUL -> {
+                    downloading = false
+                    emit(
+                        DownloadResult.Success(
+                            downloadId = downloadId,
+                            file = destFile,
+                            uri = Uri.fromFile(destFile)
+                        )
+                    )
+                }
+
+                DownloadManager.STATUS_FAILED -> {
+                    downloading = false
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)).let { reason ->
+                        val msg = when (reason) {
+                            DownloadManager.ERROR_CANNOT_RESUME -> "不能恢复下载（可能是服务器不支持断点续传）"
+                            DownloadManager.ERROR_DEVICE_NOT_FOUND -> "设备存储不可用"
+                            DownloadManager.ERROR_FILE_ERROR -> "文件系统错误"
+                            DownloadManager.ERROR_HTTP_DATA_ERROR -> "HTTP 数据错误（网络或服务器断开）"
+                            DownloadManager.ERROR_INSUFFICIENT_SPACE -> "存储空间不足"
+                            DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "重定向次数太多"
+                            DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "无法处理的 HTTP 响应码"
+                            DownloadManager.ERROR_UNKNOWN -> "未知错误"
+                            else -> "原因: $reason"
+                        }
+                        Log.e("Download", "下载失败: $msg")
+                        emit(DownloadResult.Failed(downloadId, msg))
+                    }
+                }
             }
         }
         cursor?.close()
         delay(delayTimesLong)
     }
-    // 下载完成
-    emit(DownloadProgress(downloadId, 100))
 }.flowOn(Dispatchers.IO)
+

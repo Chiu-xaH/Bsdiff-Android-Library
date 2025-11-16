@@ -1,9 +1,11 @@
-package com.xah.bsdiffs.test
+package com.xah.bsdiffs.test.util
 
 import android.content.pm.PackageManager
+import com.xah.bsdiffs.test.application.MyApplication
 
 object AppVersion {
-    private val packageName = MyApplication.context.packageManager.getPackageInfo(MyApplication.context.packageName,0)
+    private val packageName = MyApplication.Companion.context.packageManager.getPackageInfo(
+        MyApplication.Companion.context.packageName,0)
 
     fun getVersionCode() : Int {
         var versionCode = 0
