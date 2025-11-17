@@ -1,16 +1,15 @@
 plugins {
-    alias(libs.plugins.serialization)
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    id("maven-publish")
 }
 
 android {
-    namespace = "com.xah.patch"
+    namespace = "com.xah.shared"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 24
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -35,20 +34,5 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":shared"))
     implementation(libs.androidx.core.ktx)
-}
-
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                groupId = "com.xah.bsdiff"
-                artifactId = "patch"
-                version = "2.0-alpha01"
-
-                from(components["release"])
-            }
-        }
-    }
 }

@@ -23,4 +23,5 @@ rootProject.name = "Bsdiff-NDK"
 include(":patch")
 include(":testApp")
 include(":core")
-include(":download")
+include(":shared")
+include(":patch-meta")
