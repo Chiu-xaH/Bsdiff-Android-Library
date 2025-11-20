@@ -6,11 +6,10 @@ plugins {
 
 android {
     namespace = "com.xah.patch.meta"
-    compileSdk = 36
+    compileSdk = Integer.parseInt(libs.versions.maxSdkVersion.get())
 
     defaultConfig {
-        minSdk = 24
-
+        minSdk =  Integer.parseInt(libs.versions.minSdkVersion.get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }

@@ -3,10 +3,12 @@ package com.xah.patch.diff
 import android.content.Context
 import android.widget.Toast
 import com.bsdiff.core.BsdiffJni
+import com.github.sisong.HPatch
 import com.xah.patch.diff.model.DiffContent
-import com.xah.bsdiffs.result.DiffError
-import com.xah.bsdiffs.result.DiffErrorCode
-import com.xah.bsdiffs.result.DiffResult
+import com.xah.patch.diff.model.DiffType
+import com.xah.shared.result.DiffError
+import com.xah.shared.result.DiffErrorCode
+import com.xah.shared.result.DiffResult
 import com.xah.shared.util.InstallUtils.installApk
 import com.xah.shared.util.copySourceApkTo
 import com.xah.shared.util.getMd5
@@ -14,8 +16,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class DiffUpdate {
-    private val bsdiff = BsdiffJni()
+class DiffUpdate(
+    private val diffType : DiffType
+) {
+    lateinit var bsdiff : BsdiffJni
+
+    init {
+        // 初始化
+        when(diffType) {
+            DiffType.BSDIFF -> bsdiff = BsdiffJni()
+            DiffType.H_DIFF_PATCH -> {}
+        }
+    }
 
     companion object {
         private const val CACHE_DIR = "diff_temp"
@@ -35,6 +47,9 @@ class DiffUpdate {
     private fun copySourceApk(context: Context): File? = copySourceApkTo(context,getPatchCacheDir(context))
     // 校验合成包
     private fun checkTarget(targetFile: File, diffContent: DiffContent): Boolean {
+        if(diffContent.targetFileMd5 == null) {
+            return true
+        }
         if (!targetFile.exists()) {
             return false
         }
@@ -92,11 +107,22 @@ class DiffUpdate {
             )
         }
         // 合并
-        val mergeResult = bsdiff.merge(
-            sourceApk.absolutePath,
-            diffContent.diffFile.absolutePath,
-            targetFile.absolutePath
-        )
+        val mergeResult = when(diffType) {
+            DiffType.H_DIFF_PATCH -> {
+                HPatch.merge(
+                    sourceApk.absolutePath,
+                    diffContent.diffFile.absolutePath,
+                    targetFile.absolutePath
+                )
+            }
+            DiffType.BSDIFF -> {
+                bsdiff.merge(
+                    sourceApk.absolutePath,
+                    diffContent.diffFile.absolutePath,
+                    targetFile.absolutePath
+                )
+            }
+        }
         // 合并结果
         if(mergeResult != 0) {
             return@withContext DiffResult.Error(

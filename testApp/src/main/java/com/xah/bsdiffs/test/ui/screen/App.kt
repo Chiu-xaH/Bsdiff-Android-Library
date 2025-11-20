@@ -16,10 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.xah.bsdiffs.meta.DiffWithMetaUpdate
 import com.xah.bsdiffs.test.util.AppVersion
 import com.xah.bsdiffs.test.util.queryName
 import com.xah.bsdiffs.test.util.uriToFile
+import com.xah.patch.diff.DiffUpdate
+import com.xah.patch.diff.model.DiffContent
+import com.xah.patch.diff.model.DiffType
+import com.xah.patch.meta.DiffWithMetaUpdate
 import kotlinx.coroutines.launch
 
 @Composable
@@ -35,7 +38,7 @@ fun App() {
                     val patchFile = uriToFile(context, uri)
                     patchFile?.let {
                         scope.launch {
-                            DiffWithMetaUpdate().mergeCallback(it, context)
+                            DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(DiffContent(diffFile = it, targetFileMd5 = null), context)
                         }
                     }
                 } else {
