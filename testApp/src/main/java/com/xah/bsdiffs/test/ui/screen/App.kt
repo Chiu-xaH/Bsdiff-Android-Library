@@ -20,9 +20,7 @@ import com.xah.bsdiffs.test.util.AppVersion
 import com.xah.bsdiffs.test.util.queryName
 import com.xah.bsdiffs.test.util.uriToFile
 import com.xah.patch.diff.DiffUpdate
-import com.xah.patch.diff.model.DiffContent
 import com.xah.patch.diff.model.DiffType
-import com.xah.patch.meta.DiffWithMetaUpdate
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,7 +36,7 @@ fun App() {
                     val patchFile = uriToFile(context, uri)
                     patchFile?.let {
                         scope.launch {
-                            DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(DiffContent(diffFile = it, targetFileMd5 = null), context)
+                            DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(it, context)
                         }
                     }
                 } else {

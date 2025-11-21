@@ -1,6 +1,7 @@
 package com.xah.patch.diff
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import com.bsdiff.core.BsdiffJni
 import com.github.sisong.HPatch
@@ -12,6 +13,7 @@ import com.xah.shared.result.DiffResult
 import com.xah.shared.util.InstallUtils.installApk
 import com.xah.shared.util.copySourceApkTo
 import com.xah.shared.util.getMd5
+import com.xah.shared.util.mergedDefaultFunction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -31,17 +33,31 @@ class DiffUpdate(
 
     companion object {
         private const val CACHE_DIR = "diff_temp"
+
+        // 建立并返回工作目录
+        private fun getPatchCacheDir(context: Context): File {
+            val baseDir = context.cacheDir
+            val dir = File(baseDir, CACHE_DIR)
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+            return dir
+        }
+
+        // 清理工作目录
+        private fun clean(context: Context, exclude: File? = null) {
+            val dir = getPatchCacheDir(context)
+            dir.listFiles()?.forEach {
+                if (it != exclude) {
+                    it.delete()
+                }
+            }
+        }
+
+        // 清理工作目录 建议安装完成后，调用
+        fun clean(context: Context) = clean(context,null)
     }
 
-    // 建立并返回工作目录
-    private fun getPatchCacheDir(context: Context): File {
-        val baseDir = context.cacheDir
-        val dir = File(baseDir, CACHE_DIR)
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        return dir
-    }
 
     // 将源Apk复制到工作目录
     private fun copySourceApk(context: Context): File? = copySourceApkTo(context,getPatchCacheDir(context))
@@ -56,19 +72,6 @@ class DiffUpdate(
         val md5 = getMd5(targetFile)
         return md5 == diffContent.targetFileMd5
     }
-
-    // 清理工作目录
-    private fun clean(context: Context, exclude: File? = null) {
-        val dir = getPatchCacheDir(context)
-        dir.listFiles()?.forEach {
-            if (it != exclude) {
-                it.delete()
-            }
-        }
-    }
-
-    // 清理工作目录 建议安装完成后，调用
-    fun clean(context: Context) = clean(context,null)
 
     // 合并补丁包
     suspend fun merge (
@@ -125,6 +128,7 @@ class DiffUpdate(
         }
         // 合并结果
         if(mergeResult != 0) {
+            clean(context)
             return@withContext DiffResult.Error(
                 DiffError(
                     DiffErrorCode.MERGE_FAILED,
@@ -153,20 +157,7 @@ class DiffUpdate(
         diffContent: DiffContent,
         context : Context,
         onResult : (DiffResult) -> Unit = { result ->
-            when(result) {
-                is DiffResult.Success -> {
-                    val targetFile = result.file
-                    // 安装
-                    installApk (targetFile,context) {
-                        Toast.makeText(context,"Not found target apk to install", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                is DiffResult.Error -> {
-                    // 错误
-                    val error = result.error
-                    Toast.makeText(context,error.message, Toast.LENGTH_SHORT).show()
-                }
-            }
+            mergedDefaultFunction(result,context)
         },
     ) = withContext(Dispatchers.IO) {
         val targetFile = merge(diffContent, context)
@@ -175,4 +166,33 @@ class DiffUpdate(
             onResult(targetFile)
         }
     }
+
+    // 合并补丁包
+    suspend fun merge (
+        diffFile: File,
+        context : Context,
+    ) : DiffResult = merge(
+        DiffContent(
+            diffFile = diffFile,
+            targetFileMd5 = null
+        ),
+        context
+    )
+
+    // 合并补丁包回调版本
+    suspend fun mergeCallback (
+        diffFile: File,
+        context : Context,
+        onResult : (DiffResult) -> Unit = { result ->
+            mergedDefaultFunction(result,context)
+        },
+    ) = mergeCallback(
+        diffContent = DiffContent(
+            diffFile = diffFile,
+            targetFileMd5 = null
+        ),
+        context = context,
+        onResult = onResult
+    )
 }
+

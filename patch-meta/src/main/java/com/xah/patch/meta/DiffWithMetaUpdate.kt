@@ -11,6 +11,7 @@ import com.xah.shared.result.DiffResult
 import com.xah.shared.util.InstallUtils.installApk
 import com.xah.shared.util.copySourceApkTo
 import com.xah.shared.util.getMd5
+import com.xah.shared.util.mergedDefaultFunction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -206,20 +207,7 @@ class DiffWithMetaUpdate {
         patchFile: File,
         context : Context,
         onResult : (DiffResult) -> Unit = { result ->
-            when(result) {
-                is DiffResult.Success -> {
-                    val targetFile = result.file
-                    // 安装
-                    installApk (targetFile,context) {
-                        Toast.makeText(context,"Not found target apk to install", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                is DiffResult.Error -> {
-                    // 错误
-                    val error = result.error
-                    Toast.makeText(context,error.message, Toast.LENGTH_SHORT).show()
-                }
-            }
+            mergedDefaultFunction(result,context)
         },
     )  = withContext(Dispatchers.IO) {
         val targetFile = merge(patchFile, context)
