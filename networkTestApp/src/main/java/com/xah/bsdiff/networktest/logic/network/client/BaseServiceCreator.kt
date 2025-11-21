@@ -1,0 +1,19 @@
+package com.xah.bsdiff.networktest.logic.network.client
+
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+open class BaseServiceCreator(
+    url: String,
+    client: OkHttpClient = OkHttpClient.Builder().build()
+) {
+    protected val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(url)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    fun <T> create(service: Class<T>): T = retrofit.create(service)
+    inline fun <reified T> create(): T = create(T::class.java)
+}

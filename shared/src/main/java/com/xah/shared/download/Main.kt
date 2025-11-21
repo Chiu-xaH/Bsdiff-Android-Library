@@ -76,7 +76,7 @@ fun downloadFile(
 
     var request = DownloadManager.Request(url.toUri())
         .setTitle(fileName)
-        .setDescription("下载 $fileName")
+        .setDescription("Download $fileName")
         .setDestinationUri(Uri.fromFile(destFile))
         .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
@@ -115,18 +115,8 @@ fun downloadFile(
                 DownloadManager.STATUS_FAILED -> {
                     downloading = false
                     cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)).let { reason ->
-                        val msg = when (reason) {
-                            DownloadManager.ERROR_CANNOT_RESUME -> "不能恢复下载（可能是服务器不支持断点续传）"
-                            DownloadManager.ERROR_DEVICE_NOT_FOUND -> "设备存储不可用"
-                            DownloadManager.ERROR_FILE_ERROR -> "文件系统错误"
-                            DownloadManager.ERROR_HTTP_DATA_ERROR -> "HTTP 数据错误（网络或服务器断开）"
-                            DownloadManager.ERROR_INSUFFICIENT_SPACE -> "存储空间不足"
-                            DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "重定向次数太多"
-                            DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "无法处理的 HTTP 响应码"
-                            DownloadManager.ERROR_UNKNOWN -> "未知错误"
-                            else -> "原因: $reason"
-                        }
-                        Log.e("Download", "下载失败: $msg")
+                        val msg = reason.toString()
+                        Log.e("DownloadManager", "Download Failed, Please query the reason: $msg")
                         emit(DownloadResult.Failed(downloadId, msg))
                     }
                 }

@@ -5,14 +5,13 @@ plugins {
 }
 
 android {
-    val maxSdkVersion = Integer.parseInt(libs.versions.maxSdkVersion.get())
-    namespace = "com.xah.bsdiffs.test"
-    compileSdk = maxSdkVersion
+    namespace = "com.xah.bsdiff.networktest"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.xah.bsdiffs.test"
-        minSdk = Integer.parseInt(libs.versions.minSdkVersion.get())
-        targetSdk = maxSdkVersion
+        applicationId = "com.xah.bsdiff.networktest"
+        minSdk = 24
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -44,8 +43,12 @@ dependencies {
     implementation(project(":patch"))
     implementation(project(":core"))
     implementation(project(":shared"))
+    implementation(libs.retrofit)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
