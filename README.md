@@ -248,13 +248,10 @@ class UpdateViewModel() : ViewModel() {
 fun PatchUpdateUI(
     viewModel: UpdateViewModel = viewModel<UpdateViewModel>(key = "patch")
 ) {
-    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var loadingPatch by remember { mutableStateOf(false) }
     val downloadState by viewModel.downloadState.collectAsState()
-    val patchFileName = parsePatch(patch)
-    val uiStatePatch by vm.giteePatchSizeResp.state.collectAsState()
-    
-    val context = LocalContext.current
 
     when (downloadState) {
         is DownloadResult.Prepare -> {
