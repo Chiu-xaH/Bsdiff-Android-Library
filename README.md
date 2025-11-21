@@ -49,8 +49,11 @@ implementation("XXX")
 DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(it, context)
 ```
 **如需自定义请继续向下看**
+
 3. 实例化DiffUpdate类
+
 要求传入DiffType，分别为BSDIFF,H_DIFF_PATCH，根据补丁包的来源选择，推荐H_DIFF_PATCH
+
 4. 调用合并函数
 合并函数有如下：
 ```Kotlin
@@ -111,6 +114,7 @@ suspend fun merge (
 ) : DiffResult
 ```
 5. 处理合并完成后的操作
+
 预设的mergedDefaultFunction函数是库预设的回调处理，失败时使用Log.e打印并Toast，成功时安装新Apk
 ```Kotlin
 // 合并完成后的默认操作
