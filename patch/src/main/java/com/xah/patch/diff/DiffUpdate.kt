@@ -78,6 +78,7 @@ class DiffUpdate(
         diffContent: DiffContent,
         context : Context,
     ) : DiffResult = withContext(Dispatchers.IO) {
+        clean(context)
         // 复制本体Apk到工作目录
         val sourceApk = copySourceApk(context)
             ?: return@withContext DiffResult.Error(

@@ -1,8 +1,10 @@
 package com.xah.shared.util
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -55,12 +57,16 @@ fun copySourceApkTo(context: Context,destDir : File): File? {
 }
 
 // 合并完成后的默认操作
-fun mergedDefaultFunction(result : DiffResult,context: Context) {
+fun mergedDefaultFunction(
+    result : DiffResult,
+    context: Context,
+    authority : String = ".provider",
+) {
     when(result) {
         is DiffResult.Success -> {
             val targetFile = result.file
             // 安装
-            installApk (targetFile,context) {
+            installApk (targetFile,context,authority) {
                 Toast.makeText(context,"Not found target apk to install", Toast.LENGTH_SHORT).show()
             }
         }
@@ -71,4 +77,34 @@ fun mergedDefaultFunction(result : DiffResult,context: Context) {
             Toast.makeText(context,error.message, Toast.LENGTH_SHORT).show()
         }
     }
+}
+
+
+fun uriToFile(context: Context, uri: Uri): File? {
+    val contentResolver = context.contentResolver
+    val fileName = queryName(contentResolver, uri)
+    val tempFile = File(context.cacheDir, fileName ?: "temp_patch_${System.currentTimeMillis()}.patch")
+
+    return try {
+        contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(tempFile).use { output ->
+                input.copyTo(output)
+            }
+        }
+        tempFile
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun queryName(resolver: ContentResolver, uri: Uri): String? {
+    val returnCursor = resolver.query(uri, null, null, null, null)
+    returnCursor?.use {
+        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (nameIndex != -1 && it.moveToFirst()) {
+            return it.getString(nameIndex)
+        }
+    }
+    return null
 }
