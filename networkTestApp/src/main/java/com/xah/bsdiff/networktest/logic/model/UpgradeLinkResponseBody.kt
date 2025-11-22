@@ -1,6 +1,8 @@
 package com.xah.bsdiff.networktest.logic.model
 
 data class UpgradeLinkResponseBody(
+    val msg : String,
+    val code : Int,
     val data : UpgradeLinkBean
 )
 

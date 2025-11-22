@@ -5,12 +5,13 @@ plugins {
 }
 
 android {
+    val packageName = "com.xah.bsdiffs.test"
     val maxSdkVersion = Integer.parseInt(libs.versions.maxSdkVersion.get())
-    namespace = "com.xah.bsdiffs.test"
+    namespace = packageName
     compileSdk = maxSdkVersion
 
     defaultConfig {
-        applicationId = "com.xah.bsdiffs.test"
+        applicationId = packageName
         minSdk = Integer.parseInt(libs.versions.minSdkVersion.get())
         targetSdk = maxSdkVersion
         versionCode = 1

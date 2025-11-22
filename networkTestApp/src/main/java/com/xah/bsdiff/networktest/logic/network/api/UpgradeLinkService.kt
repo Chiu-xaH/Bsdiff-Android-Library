@@ -1,7 +1,7 @@
 package com.xah.bsdiff.networktest.logic.network.api
 
+import com.xah.bsdiff.networktest.logic.model.UpgradeLinkRequestBody
 import com.xah.bsdiff.networktest.logic.network.repo.UpgradeLinkRepository
-import com.xah.bsdiff.networktest.logic.util.UpgradeLinkRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.Body

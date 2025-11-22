@@ -1,5 +1,6 @@
 package com.xah.bsdiff.networktest.logic.model
 
+import android.util.Log
 import com.google.gson.Gson
 import com.xah.bsdiff.networktest.logic.network.repo.UpgradeLinkRepository
 import com.xah.bsdiff.networktest.logic.util.AppVersion
@@ -39,11 +40,12 @@ data class UpgradeLinkRequestBean(
     val timestamp: String = getCurrentTimestamp(),
     val nonce : String = UUID.randomUUID().toString().replace("-", ""),
 ) {
-    fun getSignature() : String {
+    fun signature() : String {
         val bodyJson = Gson().toJson(body)
-        return md5("body=${bodyJson}&nonce=${nonce}&secretKey=${UpgradeLinkRepository.SECRET_KEY}&timestamp=${timestamp}&url=${UpgradeLinkRepository.API}")
+        val signStr = "body=${bodyJson}&nonce=${nonce}&secretKey=${UpgradeLinkRepository.SECRET_KEY}&timestamp=${timestamp}&url=/${UpgradeLinkRepository.API}"
+        return md5(signStr)
     }
-    val signature : String = getSignature()
+    val signature : String = signature()
 }
 
 fun getUpgradeLinkRequestBean() = UpgradeLinkRequestBean(body = UpgradeLinkRequestBody())
