@@ -1,6 +1,17 @@
 package com.xah.bsdiff.networktest.ui.screen
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +33,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -75,6 +90,14 @@ fun App(
     updateViewModel: UpdateViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
+
+    LaunchedEffect(activity) {
+        if (activity != null) {
+            checkAndRequestStoragePermission(activity)
+        }
+    }
+
     val scope = rememberCoroutineScope()
     val refreshNetwork : suspend () -> Unit = {
         networkVm.loginResult.clear()
@@ -271,6 +294,38 @@ fun App(
                     Text(if(loading)"正在合并" else "安装")
                 }
             }
+        }
+    }
+}
+
+fun checkAndRequestStoragePermission(activity: Activity) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (!Environment.isExternalStorageManager()) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = "package:${activity.packageName}".toUri()
+                activity.startActivityForResult(intent, 1)
+            } catch (e: Exception) {
+                // 某些手机拉不出来 , 使用全局设置页面
+                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                activity.startActivityForResult(intent, 1)
+            }
+        }
+
+    } else {
+        // Android 10 及以下
+        val needReq = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ).any {
+            ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (needReq) {
+            ActivityCompat.requestPermissions(activity, arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ), 1)
         }
     }
 }

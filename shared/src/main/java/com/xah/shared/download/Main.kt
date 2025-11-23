@@ -59,17 +59,18 @@ fun downloadFile(
     context: Context,
     url: String,
     fileName: String,
+    destDir: File? = null, // 可自定义目录
     delayTimesLong: Long = 1000L,
     requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
     customDownloadId: Long? = null
 ): Flow<DownloadResult> = flow {
     val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
 
-    val destDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-    val destFile = File(destDir, fileName)
+    // 如果开发者没有传目录，默认使用公共 Download 目录
+    val finalDestDir = destDir ?: Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    val destFile = File(finalDestDir, fileName)
 
     if (destFile.exists()) {
-        // 下载过
         emit(DownloadResult.Downloaded(destFile))
         return@flow
     }
@@ -85,7 +86,6 @@ fun downloadFile(
     request = requestBuilder(request)
 
     val downloadId = customDownloadId ?: downloadManager.enqueue(request)
-
     val query = DownloadManager.Query().setFilterById(downloadId)
 
     var downloading = true
@@ -111,14 +111,11 @@ fun downloadFile(
                         )
                     )
                 }
-
                 DownloadManager.STATUS_FAILED -> {
                     downloading = false
-                    cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)).let { reason ->
-                        val msg = reason.toString()
-                        Log.e("DownloadManager", "Download Failed, Please query the reason: $msg")
-                        emit(DownloadResult.Failed(downloadId, msg))
-                    }
+                    val reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)).toString()
+                    Log.e("DownloadManager", "Download Failed, reason: $reason")
+                    emit(DownloadResult.Failed(downloadId, reason))
                 }
             }
         }

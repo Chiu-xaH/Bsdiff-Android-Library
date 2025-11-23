@@ -9,6 +9,7 @@
 ![图片](/img/a.png)
 
 ## [增量包生成GUI工具 (Windows x86_64)](https://github.com/Chiu-xaH/Bsdiff-Tool)
+
 ## 快速开始
 ### 引入依赖
 在settings.gradle添加
@@ -17,7 +18,7 @@ maven { url 'https://jitpack.io' }
 ```
 添加依赖，版本以Tag为准
 ```Groovy
-implementation("XXX-patch")
+implementation("com.github.Chiu-xaH:diff-patch:XXX")
 ```
 
 ### 配置FileProvider
@@ -27,7 +28,7 @@ implementation("XXX-patch")
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- 允许访问公有目录 下载文件的Download文件夹在此处 -->
+    <!-- 允许访问公有目录 -->
     <external-path name="external" path="." />
     <!-- 允许访问私有缓存目录 增量更新的工作目录在此处 -->
     <cache-path name="cache" path="." />
@@ -46,8 +47,77 @@ implementation("XXX-patch")
 </provider>
 ```
 
+### 给予安装Apk权限
+在AndroidManifest.xml添加权限，无需在代码中申请权限，而且有时候不需要这个权限也能安装，但最好加上。
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+</manifest>
+```
+
+### 给予存储权限
+如果文件涉及公有目录（例如下载文件的Download），需要授权存储权限；当然，开发者可以把文件放在私有目录，就可以跳过此步了
+
+在AndroidManifest.xml添加下面内容，并在代码中根据API版本申请权限
+
+API>=30申请新的存储权限
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+</manifest>
+```
+API<30申请旧的读与存权限
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+</manifest>
+```
+API=29需额外添加到application
+```xml
+<application
+    android:requestLegacyExternalStorage="true">
+</application>
+```
+
+代码中动态申请存储权限示例
+```Kotlin
+fun checkAndRequestStoragePermission(activity: Activity) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (!Environment.isExternalStorageManager()) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = "package:${activity.packageName}".toUri()
+                activity.startActivityForResult(intent, 1)
+            } catch (e: Exception) {
+                // 某些手机拉不出来 , 使用全局设置页面
+                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                activity.startActivityForResult(intent, 1)
+            }
+        }
+
+    } else {
+        // Android 10 及以下
+        val needReq = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ).any {
+            ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (needReq) {
+            ActivityCompat.requestPermissions(activity, arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ), 1)
+        }
+    }
+}
+
+```
+
 ### 合并补丁包
-传补丁包的File，调用如下函数即可合并并安装Apk（预设操作），如需自定义，请继续向下阅读 
+传补丁包的File(**注意传入的File如果在非App私有目录，需要处理权限适配**)，调用如下函数即可合并并安装Apk（预设操作），如需自定义，请继续向下阅读 
 ```Kotlin
 DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(it, context)
 ```
@@ -143,7 +213,7 @@ val filePickerLauncher = rememberLauncherForActivityResult(
 ```
 
 ### 安装Apk
-注意配置好FileProvider，传入Uri或者File安装Apk，推荐传入Uri（下载完成后会返回Uri）
+注意配置好FileProvider，传入Uri或者File（**注意传入的File如果在非App私有目录，需要处理权限适配**）安装Apk，推荐传入Uri（下载完成后会返回Uri）
 ```Kotlin
 object InstallUtils {
     fun installApk(
@@ -161,12 +231,14 @@ object InstallUtils {
 ```
 
 ### 下载文件
-库也为其提供了一个异步、基于Flow、借助DownloadManager的downloadFile函数，用于下载补丁包或安装包，当然，开发者也可以自行处理下载，库中提供的合并补丁包、安装Apk函数只需要传入File即可
+库也为其提供了一个异步、基于Flow、借助DownloadManager的downloadFile函数，用于下载补丁包或安装包。
+
 ```Kotlin
 fun downloadFile(
     context: Context,
     url: String,
     fileName: String,
+    destDir: File? = null, // 空则下载到公有Download目录
     delayTimesLong: Long = 1000L,
     requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
     customDownloadId: Long? = null
@@ -302,8 +374,27 @@ fun PatchUpdateUI(
 ```
 
 ## 声明
-尽管我已经做了报错封装等举措，并在不同的SDK版本进行测试，但由于个人的测试设备以及开发经验有限，仍不可避免会出现问题。如需单独定制，开发者可以单独引入**core**模块，此模块只有Native层，然后自行自定义。
+尽管库已经做了报错封装等举措，并在不同的SDK版本进行测试，但由于测试设备以及开发经验有限，仍不可避免会出现问题。
+### 兼容性（基于Android Studio模拟器）
 
+| API | 下载文件 | 安装Apk | 合并增量包 |
+|-----|------|-------|-------|
+| 24  | √    | √     | 待测    |
+| 25  | 待测   | 待测    | 待测    |
+| 26  | √    | √     | 待测    |
+| 27  | 待测   | 待测    | 待测    |
+| 28  | 待测   | 待测    | 待测    |
+| 29  | √    | √     | 待测    |
+| 30  | 待测   | 待测    | 待测    |
+| 31  | √    | √     | 待测    |
+| 32  | 待测   | 待测    | 待测    |
+| 33  | 待测   | 待测    | 待测    |
+| 34  | √    | √     | 待测    |
+| 35  | √    | √     | 待测    |
+| 36  | 待测   | 待测    | 待测    |
+
+### 定制
+如需单独定制，开发者可以单独引入**core**模块，此模块只有Native层，然后自行自定义。
 开源致谢：
 - Bsdiff
 - HPatchDiff

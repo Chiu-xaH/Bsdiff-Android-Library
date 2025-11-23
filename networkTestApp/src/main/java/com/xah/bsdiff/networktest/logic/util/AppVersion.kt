@@ -26,4 +26,8 @@ object AppVersion {
         }
         return versionName
     }
+
+    val sdkInt = android.os.Build.VERSION.SDK_INT
+
+    val needPermission = sdkInt < 29
 }
