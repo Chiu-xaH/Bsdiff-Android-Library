@@ -22,14 +22,14 @@ implementation("XXX")
 
 ## 快速开始
 1. 为保证安装Apk的顺利进行，需先配置FileProvider
-新建res/xml/file_paths.xml，添加如下路径（库在data中的cache文件夹进行新安装包的生成）
+新建res/xml/file_paths.xml，添加如下路径
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- 允许访问私有缓存目录 -->
-    <cache-path
-        name="cache"
-        path="." />
+    <!-- 允许访问公有目录 下载文件的Download文件夹在此处 -->
+    <external-path name="external" path="." />
+    <!-- 允许访问私有缓存目录 增量更新的工作目录在此处 -->
+    <cache-path name="cache" path="." />
 </paths>
 ```
 在AndroidManifest.xml中配置ContentProvider：
@@ -70,17 +70,8 @@ data class DiffContent(
     val diffFile: File
 )
 ```
-DiffResult定义如下，会返回以下两种结果：若成功生成新Apk则返回其java.File，否则给出错误
+DiffResult含Success、Error两种结果：若成功生成新Apk则返回其java.File，否则给出错误信息
 ```Kotlin
-sealed class DiffResult {
-    data class Success(val file: File) : DiffResult()
-    data class Error(val error: DiffError) : DiffResult()
-}
-// 错误
-data class DiffError(
-    val code: DiffErrorCode,
-    val message: String
-)
 // 常见错误类型代号
 enum class DiffErrorCode(val code: Int) {
     SOURCE_APK_NOT_FOUND(1000),// 源Apk在工作目录内未找到，可能是复制Apk时出现问题
@@ -122,25 +113,9 @@ fun mergedDefaultFunction(
     result : DiffResult,
     context: Context,
     authority : String = ".provider",
-) {
-    when(result) {
-        is DiffResult.Success -> {
-            val targetFile = result.file
-            // 安装
-            installApk (targetFile,context,authority) {
-                Toast.makeText(context,"Not found target apk to install", Toast.LENGTH_SHORT).show()
-            }
-        }
-        is DiffResult.Error -> {
-            // 错误
-            val error = result.error
-            Log.e("DiffUpdate","code: " + error.code + "\nmessage: " + error.message)
-            Toast.makeText(context,error.message, Toast.LENGTH_SHORT).show()
-        }
-    }
-}
+) 
 ```
-6. 最终搭配Compose的文件选择器，完整使用如下：
+6. 最终搭配Compose的文件选择器，使用示例用如下：
 ```Kotlin
 val filePickerLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.OpenDocument(),
