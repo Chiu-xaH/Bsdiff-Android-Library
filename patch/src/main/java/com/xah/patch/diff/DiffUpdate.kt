@@ -58,7 +58,6 @@ class DiffUpdate(
         fun clean(context: Context) = clean(context,null)
     }
 
-
     // 将源Apk复制到工作目录
     private fun copySourceApk(context: Context): File? = copySourceApkTo(context,getPatchCacheDir(context))
     // 校验合成包

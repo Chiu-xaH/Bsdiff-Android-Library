@@ -2,6 +2,8 @@
 
 [![](https://jitpack.io/v/Chiu-xaH/Bsdiff-Android-Library.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
 
+English | [中文](README_en.md)
+
 A library for Android that integrates incremental update functionality. Developers only need to pass the patch package as a `java.io.File`(hereinafter collectively referred to as “File”) to complete the merge and installation.
 
 Real-world usage example: In [HFUT-Schedule](https://github.com/Chiu-xaH/HFUT-Schedule/releases), you can install updates for older **ARM64 APKs** directly through incremental updates inside the app.

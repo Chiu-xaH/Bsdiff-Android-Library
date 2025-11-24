@@ -5,11 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
@@ -46,7 +43,7 @@ import com.xah.bsdiff.networktest.viewmodel.NetworkViewModel
 import com.xah.patch.diff.DiffUpdate
 import com.xah.patch.diff.model.DiffContent
 import com.xah.patch.diff.model.DiffType
-import com.xah.shared.download.downloadFile
+import com.xah.shared.download.DownloadUtils
 import com.xah.shared.download.model.DownloadResult
 import com.xah.shared.util.InstallUtils
 import kotlinx.coroutines.Job
@@ -67,7 +64,7 @@ class UpdateViewModel() : ViewModel() {
         if (downloadJob != null) return
 
         downloadJob = viewModelScope.launch {
-            downloadFile(
+            DownloadUtils.downloadFile(
                 context = context,
                 url = url,
                 fileName = filename

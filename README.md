@@ -1,14 +1,17 @@
-# Patch-Android-Library 
+# DiffUpdater (Android Library) 
 
 [![](https://jitpack.io/v/Chiu-xaH/Bsdiff-Android-Library.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
 
+[English](README_en.md) | 中文
+
 适用于Android的库，集成了增量更新功能，开发者将补丁包的java.io.File（后续统称File）传入即可完成合并及安装
 
-实际应用案例：[聚在工大](https://github.com/Chiu-xaH/HFUT-Schedule/releases)中安装最新版本的近期旧版本的**ARM64位**APK，在APP内即可使用增量更新，[视频演示](/img/example.mp4)
+## 实际应用案例
+[聚在工大](https://github.com/Chiu-xaH/HFUT-Schedule/releases)中安装最新版本的近期旧版本的ARM64位APK，[视频演示](/img/example.mp4)
 
 ![图片](/img/a.png)
 
-## [增量包生成GUI工具 (Windows x86_64)](https://github.com/Chiu-xaH/Bsdiff-Tool)
+## [增量包GUI工具 (Windows x86_64)](https://github.com/Chiu-xaH/Bsdiff-Tool)
 
 ## 快速开始
 ### 引入依赖
@@ -18,7 +21,7 @@ maven { url 'https://jitpack.io' }
 ```
 添加依赖，版本以Tag为准
 ```Groovy
-implementation("com.github.Chiu-xaH:diff-patch:XXX")
+implementation("com.github.Chiu-xaH:diff-updater:XXX")
 ```
 
 ### 配置FileProvider
@@ -95,7 +98,6 @@ fun checkAndRequestStoragePermission(activity: Activity) {
                 activity.startActivityForResult(intent, 1)
             }
         }
-
     } else {
         // Android 10 及以下
         val needReq = arrayOf(
@@ -113,11 +115,10 @@ fun checkAndRequestStoragePermission(activity: Activity) {
         }
     }
 }
-
 ```
 
 ### 合并补丁包
-传补丁包的File(**注意传入的File如果在非App私有目录，需要处理权限适配**)，调用如下函数即可合并并安装Apk（预设操作），如需自定义，请继续向下阅读 
+传补丁包的File(**如果File在公有目录，需提前申请存储权限**)，调用如下函数即可合并并安装Apk（预设操作），如需自定义，请继续向下阅读 
 ```Kotlin
 DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(it, context)
 ```
@@ -181,13 +182,15 @@ fun mergedDefaultFunction(
 ```
 
 #### 缓存清理
-DiffUpdate提供了静态方法clean，用于工作目录下的所有文件
+DiffUpdate提供了静态方法clean，用于手动清理工作目录
 ```Kotlin
 DiffUpdate.clean(context)
 ```
-调用merge时会先清理工作目录；当合并失败时，会清理掉工作目录；合并成功时，会清理掉除新Apk以外的文件缓存；
+即使开发者不手动清理，调用merge函数会先清理工作目录；当合并失败时，会清理掉工作目录；合并成功时，会清理掉除新Apk以外的文件缓存；
 
-但是由于安装Apk后，已经杀死了App，无法清除安装包缓存，但一些国内定制UI系统都会帮助清理，而且本身就在cache文件夹，可以被系统当缓存清理掉，当然开发者也可以调用clean函数进行清理。
+clean永远只能清理工作目录，补丁包从外部传入不会被清理，需要开发者在merge成功后手动清理，这个不难，开发者既然能传入File，就可以调用delete()删掉；
+
+由于安装Apk后，已经杀死了App，无法清除安装包缓存，但一些安装器支持安装后自动删除Apk，而且本身就在cache文件夹，可以被系统当缓存清理掉；当然开发者也可以调用clean函数进行清理，建议每次更新后调用。
 
 #### 使用示例
 最终搭配Compose的文件选择器，使用示例如下：
@@ -213,7 +216,7 @@ val filePickerLauncher = rememberLauncherForActivityResult(
 ```
 
 ### 安装Apk
-注意配置好FileProvider，传入Uri或者File（**注意传入的File如果在非App私有目录，需要处理权限适配**）安装Apk，推荐传入Uri（下载完成后会返回Uri）
+注意配置好FileProvider，传入Uri或者File（**如果File在公有目录，需提前申请存储权限**）安装Apk，推荐传入Uri（下载完成后会返回Uri）
 ```Kotlin
 object InstallUtils {
     fun installApk(
@@ -234,28 +237,42 @@ object InstallUtils {
 库也为其提供了一个异步、基于Flow、借助DownloadManager的downloadFile函数，用于下载补丁包或安装包。
 
 ```Kotlin
-fun downloadFile(
-    context: Context,
-    url: String,
-    fileName: String,
-    destDir: File? = null, // 空则下载到公有Download目录
-    delayTimesLong: Long = 1000L,
-    requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
-    customDownloadId: Long? = null
-): Flow<DownloadResult>
+object DownloadUtils {
+    // 获取文件bytes
+    suspend fun getFileSize(
+        url: String,
+        timeOutTime : Int = 5000
+    ): Long?
 
-// 初始化 获取下载文件的大小、判断是否下载过
-suspend fun initDownloadFileStatus(
-    url: String,
-    fileName: String,
-    timeOutTime: Int = 5000
-) : DownloadResult
+    // 初始化 获取下载文件的大小、判断是否下载过(可选校验MD5)
+    fun initDownloadFileStatus(
+        fileName: String,
+        destDir : File? = null,
+        fileMd5 : String?,
+        fileSize : Long?,
+    ) : DownloadResult
 
-// 获取文件bytes
-suspend fun getFileSize(
-    url: String,
-    timeOutTime : Int = 5000
-): Long?
+    /**
+     * @param context 上下文
+     * @param url 下载链接
+     * @param fileName 文件名，记得带扩展名
+     * @param fileMd5 期望MD5，用于检验是否下载过或者下载完成后是否符合期望
+     * @param destDir 下载目录，默认为null代表下载到公有Download目录(需存储权限)
+     * @param delayTimesLong 下载进度更新间隔，单位为毫秒
+     * @param requestBuilder 自定义下载器构建
+     * @param customDownloadId 自定义下载ID，默认为null代表由系统分配，下载过程会返回id
+     */
+    fun downloadFile(
+        context: Context,
+        url: String,
+        fileName: String,
+        fileMd5 : String? = null, 
+        destDir: File? = null,
+        delayTimesLong: Long = 1000L,
+        requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
+        customDownloadId: Long? = null
+    ): Flow<DownloadResult>
+}
 ```
 其中DownloadResult为返回结果，初始状态可通过initDownloadFileStatus获取，或者直接为Prepare，定义如下：
 ```Kotlin
@@ -265,7 +282,7 @@ sealed class DownloadResult {
     // 正在下载，progress为下载进度，从0~100，每delayTimesLong毫秒更新一次
     data class Progress(val downloadId: Long, val progress: Int) : DownloadResult()
     // 下载完成，可对File或Uri进行处理，例如Uri可以安装Apk，库内预设了此方法，InstallUtils.installApk()
-    data class Success(val downloadId: Long, val file: File, val uri: Uri) : DownloadResult()
+    data class Success(val downloadId: Long, val file: File, val uri: Uri, val checked : Boolean) : DownloadResult()
     // 下载失败，会打印Log并且给出可能的原因
     data class Failed(val downloadId: Long, val reason: String?) : DownloadResult()
     // 准备状态，未启动下载，这时可以告知用户文件的大小（可选）
@@ -389,12 +406,14 @@ fun PatchUpdateUI(
 | 31  | √    | √     | 待测    |
 | 32  | 待测   | 待测    | 待测    |
 | 33  | 待测   | 待测    | 待测    |
-| 34  | √    | √     | 待测    |
-| 35  | √    | √     | 待测    |
+| 34  | √    | √     | √     |
+| 35  | √    | √     | √     |
 | 36  | 待测   | 待测    | 待测    |
 
 ### 定制
 如需单独定制，开发者可以单独引入**core**模块，此模块只有Native层，然后自行自定义。
-开源致谢：
+### 开源致谢
 - Bsdiff
 - HPatchDiff
+### 应用升级系统与应用分发平台
+👉 [Upgradelink](https://github.com/toolsetlink/upgradelink)
