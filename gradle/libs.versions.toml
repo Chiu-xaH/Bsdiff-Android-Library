@@ -1,5 +1,5 @@
 [versions]
-libraryVersionName = "2.0-dev1636"
+libraryVersionName = "2.0-dev01"
 libraryPackageName = "com.xah.diff"
 maxSdkVersion = "36"
 minSdkVersion = "24"
