@@ -11,9 +11,16 @@
 
 ![图片](/img/a.png)
 
-## [增量包GUI工具 (Windows x86_64)](https://github.com/Chiu-xaH/Bsdiff-Tool)
-
 ## 快速开始
+
+### 增量包的生成与分发
+
+#### [GUI工具](https://github.com/Chiu-xaH/Bsdiff-Tool) (Windows x86_64)
+
+#### [Upgradelink](https://github.com/toolsetlink/upgradelink) (应用升级系统与应用分发平台)
+
+#### [HDiffPatch](https://github.com/sisong/HDiffPatch) (使用-f参数)
+
 ### 引入依赖
 在settings.gradle添加
 ```Groovy
@@ -415,5 +422,3 @@ fun PatchUpdateUI(
 ### 开源致谢
 - Bsdiff
 - HPatchDiff
-### 应用升级系统与应用分发平台
-👉 [Upgradelink](https://github.com/toolsetlink/upgradelink)
