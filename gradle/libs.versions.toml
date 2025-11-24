@@ -1,11 +1,10 @@
 [versions]
-libraryVersionName = "2.0-dev01"
+libraryVersionName = "2.0-dev1615"
 libraryPackageName = "com.xah.bsdiff"
 maxSdkVersion = "36"
 minSdkVersion = "24"
 agp = "8.9.3"
 kotlin = "2.2.0"
-kotlinxSerializationJson = "1.7.3"
 core = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -17,7 +16,6 @@ converterGson = "2.9.0"
 okhttp = "4.9.0"
 
 [libraries]
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
