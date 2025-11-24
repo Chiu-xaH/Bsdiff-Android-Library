@@ -17,7 +17,7 @@
 
 #### [GUI工具](https://github.com/Chiu-xaH/Bsdiff-Tool) (Windows x86_64)
 
-#### [Upgradelink](https://github.com/toolsetlink/upgradelink) (应用升级系统与应用分发平台)
+#### [UpgradeLink](https://github.com/toolsetlink/upgradelink) (应用升级系统与应用分发平台)
 
 #### [HDiffPatch](https://github.com/sisong/HDiffPatch) (使用-f参数)
 

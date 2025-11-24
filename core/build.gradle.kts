@@ -40,17 +40,15 @@ android {
     ndkVersion = "29.0.13113456"
 }
 
-dependencies {
-}
+dependencies {}
 
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                groupId = "com.xah.bsdiff"
+                groupId = libs.versions.libraryPackageName.get()
+                version = libs.versions.libraryVersionName.get()
                 artifactId = "core"
-                version = "2.0-alpha01"
-
                 from(components["release"])
             }
         }

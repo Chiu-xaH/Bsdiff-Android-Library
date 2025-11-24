@@ -43,10 +43,9 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                groupId = "com.xah.bsdiff"
+                groupId = libs.versions.libraryPackageName.get()
+                version = libs.versions.libraryVersionName.get()
                 artifactId = "patch"
-                version = "2.0-alpha01"
-
                 from(components["release"])
             }
         }

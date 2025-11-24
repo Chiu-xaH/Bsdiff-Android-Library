@@ -1,4 +1,6 @@
 [versions]
+libraryVersionName = "2.0-dev01"
+libraryPackageName = "com.xah.bsdiff"
 maxSdkVersion = "36"
 minSdkVersion = "24"
 agp = "8.9.3"

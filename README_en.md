@@ -1,51 +1,58 @@
-# Patch-Android-Library  
+# DiffUpdater (Android Library)
 
-[![](https://jitpack.io/v/Chiu-xaH/Bsdiff-Android-Library.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
+[![Jitpack version](https://jitpack.io/v/Chiu-xaH/Bsdiff-Android-Library.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
 
-English | [中文](README_en.md)
+English | [中文](README.md)
 
-A library for Android that integrates incremental update functionality. Developers only need to pass the patch package as a `java.io.File`(hereinafter collectively referred to as “File”) to complete the merge and installation.
+An Android library that integrates incremental update functionality. Developers simply pass the patch package's `java.io.File` (hereafter referred to as File) to merge and install it.
 
-Real-world usage example: In [HFUT-Schedule](https://github.com/Chiu-xaH/HFUT-Schedule/releases), you can install updates for older **ARM64 APKs** directly through incremental updates inside the app.
-[Video Demo](/img/example.mp4)
+## Practical Application Case
 
-![Image](/img/a.png)
+Install the latest version of a recent old version of an ARM64 APK in [HFUT Schedule](https://github.com/Chiu-xaH/HFUT-Schedule/releases) ([Video Demo](/img/example.mp4))
 
-## [GUI Tool for Patch Generation (Windows x86_64)](https://github.com/Chiu-xaH/Bsdiff-Tool)
+![Example Image](/img/a.png)
 
 ## Quick Start
 
+### Generating and Distributing Incremental Packages
+
+#### [GUI Tool](https://github.com/Chiu-xaH/Bsdiff-Tool) (Windows x86_64)
+
+#### [UpgradeLink](https://github.com/toolsetlink/upgradelink) (App upgrade system and distribution platform)
+
+#### [HDiffPatch](https://github.com/sisong/HDiffPatch) (Use with the `-f` parameter)
+
 ### Add Dependency
 
-Add the following in `settings.gradle`:
+In `settings.gradle` add:
 
 ```Groovy
 maven { url 'https://jitpack.io' }
 ```
 
-Add dependency (use Tag version):
+Add dependency (version is based on the Tag):
 
 ```Groovy
-implementation("XXX-patch")
+implementation("com.github.Chiu-xaH:diff-updater:XXX")
 ```
 
 ### Configure FileProvider
 
-To ensure APK installation works properly, you must configure FileProvider.
+To ensure the smooth installation of the APK, configure the `FileProvider` first.
 
-Create `res/xml/file_paths.xml` and add:
+Create `res/xml/file_paths.xml` and add the following paths:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- Allow access to public directories such as Download -->
+    <!-- Allow access to public directories -->
     <external-path name="external" path="." />
-    <!-- Allow access to private cache directory where patching works -->
+    <!-- Allow access to private cache directories where incremental update working directories are stored -->
     <cache-path name="cache" path="." />
 </paths>
 ```
 
-Add FileProvider to your `AndroidManifest.xml`:
+In `AndroidManifest.xml`, configure the `ContentProvider`:
 
 ```xml
 <provider
@@ -59,10 +66,85 @@ Add FileProvider to your `AndroidManifest.xml`:
 </provider>
 ```
 
+### Install APK Permissions
+
+Add permission in `AndroidManifest.xml` to install the APK. Although this may not always be necessary, it's best to add it.
+
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+</manifest>
+```
+
+### Storage Permissions
+
+If the file involves public directories (such as downloaded files in `Download`), storage permissions need to be granted. However, developers can choose to store the file in a private directory to bypass this step.
+
+Add the following in `AndroidManifest.xml`, and request permissions in the code based on the API version.
+
+For API >= 30, request new storage permissions:
+
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+</manifest>
+```
+
+For API < 30, request old read/write storage permissions:
+
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+</manifest>
+```
+
+For API = 29, add the following in the `application` tag:
+
+```xml
+<application
+    android:requestLegacyExternalStorage="true">
+</application>
+```
+
+Example of dynamically requesting storage permissions in code:
+
+```Kotlin
+fun checkAndRequestStoragePermission(activity: Activity) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (!Environment.isExternalStorageManager()) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = "package:${activity.packageName}".toUri()
+                activity.startActivityForResult(intent, 1)
+            } catch (e: Exception) {
+                // Some phones may not allow, use global settings page
+                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                activity.startActivityForResult(intent, 1)
+            }
+        }
+    } else {
+        // For Android 10 and below
+        val needReq = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ).any {
+            ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (needReq) {
+            ActivityCompat.requestPermissions(activity, arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ), 1)
+        }
+    }
+}
+```
+
 ### Merge Patch Package
 
-Pass a File patch file and call the following method to merge and install the APK (default behavior).
-For customization, continue reading below.
+Pass the patch file (`File`) (if the file is in a public directory, ensure storage permissions are granted first) and call the following function to merge and install the APK (default behavior). For customization, refer to the following details:
 
 ```Kotlin
 DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(it, context)
@@ -70,39 +152,34 @@ DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback(it, context)
 
 #### Customization
 
-When instantiating `DiffUpdate`, you must pass a `DiffType`, which can be `BSDIFF` or `H_DIFF_PATCH`.
-It is recommended to use `H_DIFF_PATCH`.
+When instantiating the `DiffUpdate` class, you must specify the `DiffType`, either `BSDIFF` or `H_DIFF_PATCH`. It is recommended to use `H_DIFF_PATCH` based on the patch package source.
 
-`DiffUpdate` provides several merge functions. The first is the base function; developers can handle success and error manually.
-The others are presets built on top of the base function.
+The `DiffUpdate` class has several patch merge functions. The first one is the base function, and developers can handle errors and success operations themselves. The remaining three functions are predefined, built on the first one.
 
 ```Kotlin
 class DifferUpdate(private val differType : DifferType) {
-    // Base function: merge patch and verify MD5, returns DiffResult
+    // Base function, pass DiffContent and Context to merge the patch with the APK and validate MD5, returning DiffResult
     suspend fun merge (
         diffContent: DiffContent,
         context : Context
     ) : DiffResult
-
     // Callback version of merge
     suspend fun mergeCallback (
         diffContent: DiffContent,
         context : Context,
-        onResult : (DiffResult) -> Unit = { result ->
-            mergedDefaultFunction(result,context)
+        onResult : (DiffResult) -> Unit = { result -> 
+            mergedDefaultFunction(result, context)
         },
     )
-
-    // Callback version without MD5 verification
+    // Callback version of merge without MD5 validation
     suspend fun mergeCallback (
         diffFile: File,
         context : Context,
-        onResult : (DiffResult) -> Unit = { result ->
-            mergedDefaultFunction(result,context)
+        onResult : (DiffResult) -> Unit = { result -> 
+            mergedDefaultFunction(result, context)
         },
     )
-
-    // Merge without MD5 verification
+    // Merge without MD5 validation
     suspend fun merge (
         diffFile: File,
         context : Context,
@@ -110,61 +187,55 @@ class DifferUpdate(private val differType : DifferType) {
 }
 ```
 
-`DiffContent` is defined as follows and contains the target file MD5 and the patch file.
-If `MD5` is `null`, the verification step is skipped:
+The `DiffContent` definition includes the target file's MD5 and the patch file's `File`. If MD5 is null, the MD5 check will be skipped.
 
 ```Kotlin
 data class DiffContent(val targetFileMd5 : String?, val diffFile: File)
 ```
 
-`DiffResult` contains two result types: `Success` or `Error`.
-On success, the new APK file is returned; on failure, an error message is provided:
+`DiffResult` has two possible outcomes: `Success` or `Error`. If the APK is successfully generated, its `File` is returned; otherwise, an error message is provided.
 
 ```Kotlin
 // Common error codes
 enum class DiffErrorCode(val code: Int) {
-    SOURCE_APK_NOT_FOUND(1000), // Source APK not found in workspace
-    DIFF_FILE_NOT_FOUND(1001),  // Patch file not found
-    MERGE_FAILED(1002),         // Native merge failed
-    MD5_MISMATCH(1003),         // MD5 check failed
+    SOURCE_APK_NOT_FOUND(1000),// Source APK not found in working directory, possible issue during APK copying
+    DIFF_FILE_NOT_FOUND(1001), // Patch file not found, possibly deleted
+    MERGE_FAILED(1002), // Native layer merge failed, error code in message
+    MD5_MISMATCH(1003), // MD5 validation failed
 }
 ```
 
-`mergedDefaultFunction` is the library’s default callback behavior:
-On failure, it logs and shows a Toast.
-On success, it installs the new APK.
+The `mergedDefaultFunction` is a preset callback for handling results. In case of failure, it logs the error and shows a Toast; on success, it installs the new APK.
 
 ```Kotlin
+// Default action after merge completion
 fun mergedDefaultFunction(
     result : DiffResult,
     context: Context,
     authority : String = ".provider",
-)
+) 
 ```
 
 #### Cache Cleanup
 
-`DiffUpdate` provides a static method to clear the working directory:
+The `DiffUpdate` class provides a static method `clean` to manually clean the working directory:
 
 ```Kotlin
 DiffUpdate.clean(context)
 ```
 
-Behavior:
+Even if developers don't manually clean, the `merge` function will clean the working directory first. If the merge fails, the working directory will be cleaned; after a successful merge, all files except the new APK will be cleaned.
 
-* Workspace is cleaned before merging.
-* On failure, workspace is cleaned.
-* On success, all files except the generated APK are cleaned.
-* The installed APK cache remains (app process is killed), but many OEM ROMs clean it automatically; developers may also call `clean()` manually.
+The `clean` function only clears the working directory. Since the patch package is passed from external sources, it won't be cleaned by the library. Developers can delete it manually using `delete()` after a successful merge.
 
-#### Usage Example
+#### Example Usage
 
-Paired with a Compose file picker:
+Here's an example of using the library with the file picker in Compose:
 
 ```Kotlin
 val filePickerLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.OpenDocument(),
-    onResult = { uri ->
+    onResult = { uri -> 
         uri?.let { 
             val name = queryName(context.contentResolver, uri)
             if (name?.endsWith(".patch") == true) {
@@ -182,12 +253,9 @@ val filePickerLauncher = rememberLauncherForActivityResult(
 )
 ```
 
----
+### Install APK
 
-### APK Installation
-
-Be sure FileProvider is configured correctly.
-You may install via `Uri` or `File` (Uri is recommended, especially after downloads).
+Ensure proper `FileProvider` configuration. You can pass either a `Uri` or a `File` (ensure storage permissions are granted if the file is in a public directory) to install the APK. It is recommended to pass the `Uri` (returned after download completes).
 
 ```Kotlin
 object InstallUtils {
@@ -205,67 +273,79 @@ object InstallUtils {
 }
 ```
 
----
+### Download File
 
-### Download Files
-
-The library provides an asynchronous, Flow-based `downloadFile` method using `DownloadManager`.
+The library also provides an asynchronous, `Flow`-based file download function using `DownloadManager` for downloading patch or installation files.
 
 ```Kotlin
-fun downloadFile(
-    context: Context,
-    url: String,
-    fileName: String,
-    delayTimesLong: Long = 1000L,
-    requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
-    customDownloadId: Long? = null
-): Flow<DownloadResult>
+object DownloadUtils {
+    // Get file size in bytes
+    suspend fun getFileSize(
+        url: String,
+        timeOutTime : Int = 5000
+    ): Long?
+
+    // Initialize, check file size, and whether the file has been downloaded (optional MD5 check)
+    fun initDownloadFileStatus(
+        fileName: String,
+        destDir : File? = null,
+        fileMd5 : String?,
+        fileSize : Long?,
+    ) : DownloadResult
+
+    /**
+     * @param context Context
+     * @param url Download URL
+     * @param fileName File name, including extension
+     * @param fileMd5 Expected MD5, used to check if the file is already downloaded or if the downloaded file matches the expected MD5
+     * @param destDir Destination directory, null means it will be downloaded to the public `Download` directory (requires storage permission)
+     * @param delayTimesLong The delay time for downloading progress update, in milliseconds
+     * @param requestBuilder Custom downloader builder
+     * @param customDownloadId Custom download ID, null means it will be assigned by the system, and the download process will return the ID
+     */
+    fun downloadFile(
+        context: Context,
+        url: String,
+        fileName: String,
+        fileMd5 : String? = null, 
+        destDir: File? = null,
+        delayTimesLong: Long = 1000L,
+        requestBuilder: (DownloadManager.Request) -> DownloadManager.Request = { it },
+        customDownloadId: Long? = null
+    ): Flow<DownloadResult>
+}
 ```
 
-Initialize to get file size or check if it already exists:
-
-```Kotlin
-suspend fun initDownloadFileStatus(
-    url: String,
-    fileName: String,
-    timeOutTime: Int = 5000
-) : DownloadResult
-```
-
-Get remote file size:
-
-```Kotlin
-suspend fun getFileSize(
-    url: String,
-    timeOutTime : Int = 5000
-): Long?
-```
-
-`DownloadResult` is defined below:
+The `DownloadResult` provides various download states, including preparation, download progress, success, and failure.
 
 ```Kotlin
 sealed class DownloadResult {
+    // The file already exists in the download directory, return File directly
     data class Downloaded(val file : File) : DownloadResult()
+    // Downloading, progress ranges from 0 to 100, updated every `delayTimesLong` milliseconds
     data class Progress(val downloadId: Long, val progress: Int) : DownloadResult()
-    data class Success(val downloadId: Long, val file: File, val uri: Uri) : DownloadResult()
+    // Download completed, the File or Uri can be processed, for example, Uri can be used to install the APK, the library provides this method by default, `InstallUtils.installApk()`
+    data class Success(val downloadId: Long, val file: File, val uri: Uri, val checked : Boolean) : DownloadResult()
+    // Download failed, logs and gives possible reasons
     data class Failed(val downloadId: Long, val reason: String?) : DownloadResult()
+    // Preparation state, download not started, you can notify the user of the file size (optional)
     data class Prepare(val fileSize : Long? = null) : DownloadResult()
 }
 ```
 
-Complete usage example:
-*(kept exactly as original)*
+### Complete Example of Usage
+
+Here’s an example of downloading and using the library in a `ViewModel`:
 
 ```Kotlin
 class UpdateViewModel() : ViewModel() {
-    private val _downloadState = MutableStateFlow<DownloadResult>(
-        DownloadResult.Prepare
-    )
+    private val _downloadState = MutableStateFlow<DownloadResult>(DownloadResult.Prepare)
     val downloadState: StateFlow<DownloadResult> = _downloadState
 
     private var downloadJob: Job? = null
 
-    fun startDownload(url : String,filename : String,context: Context) {
+    fun startDownload(url: String, filename: String, context: Context) {
+        // Prevent multiple downloads
         if (downloadJob != null) return
 
         downloadJob = viewModelScope.launch {
@@ -298,18 +378,21 @@ fun PatchUpdateUI(
 
     when (downloadState) {
         is DownloadResult.Prepare -> {
+            // Preparation phase
             LargeButton(
                 onClick = {
-                    viewModel.startDownload("DownloadUrl", "FileName", context)
+                    viewModel.startDownload("download_link", "filename", context)
                 },
-                text = "Download (${"FileSize"}MB)",
+                text = "Download(${downloadState.fileSize}MB)",
             )
         }
         is DownloadResult.Downloaded -> {
+            // Check if the file is downloaded
             LargeButton(
                 onClick = {
                     scope.launch {
                         loadingPatch = true
+                        // Merge and install
                         DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback((downloadState as DownloadResult.Downloaded).file, context)
                         loadingPatch = false
                     }
@@ -325,6 +408,7 @@ fun PatchUpdateUI(
             )
         }
         is DownloadResult.Progress -> {
+            // Update progress
             Text("${(downloadState as DownloadResult.Progress).progress}%")
         }
         is DownloadResult.Success -> {
@@ -332,6 +416,7 @@ fun PatchUpdateUI(
                 onClick = {
                     scope.launch {
                         loadingPatch = true
+                        // Merge and install
                         DiffUpdate(DiffType.H_DIFF_PATCH).mergeCallback((downloadState as DownloadResult.Success).file, context)
                         loadingPatch = false
                     }
@@ -350,9 +435,36 @@ fun PatchUpdateUI(
     }
 }
 ```
-## Disclaimer
-Although I have added error handling and tested the library across different SDK versions, issues may still occur due to limitations in my testing devices and development experience. If customization is needed, developers may import the **core** module separately — this module contains only the native layer — and implement their own integration logic.
 
-Open Source Acknowledgments:
-- Bsdiff
-- HPatchDiff
+### Declaration
+
+Although the library has error handling and has been tested on different SDK versions, some issues may still arise due to limited testing devices and development experience.
+
+### Compatibility (Based on Android Studio Emulator)
+
+| API | Download File | Install APK  | Merge Incremental Package |
+|-----|---------------|--------------|---------------------------|
+| 24  | √             | √            | To be tested              |
+| 25  | To be tested  | To be tested | To be tested              |
+| 26  | √             | √            | To be tested              |
+| 27  | To be tested  | To be tested | To be tested              |
+| 28  | To be tested  | To be tested | To be tested              |
+| 29  | √             | √            | To be tested              |
+| 30  | To be tested  | To be tested | To be tested              |
+| 31  | √             | √            | To be tested              |
+| 32  | To be tested  | To be tested | To be tested              |
+| 33  | To be tested  | To be tested | To be tested              |
+| 34  | √             | √            | √                         |
+| 35  | √             | √            | √                         |
+| 36  | To be tested  | To be tested | To be tested              |
+
+### Customization
+
+If you need to customize, developers can import the **core** module, which only contains the Native layer, and make their own adjustments.
+
+### Open Source Acknowledgements
+
+* Bsdiff
+* HPatchDiff
+
+
