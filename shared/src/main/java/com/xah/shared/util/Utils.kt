@@ -2,12 +2,10 @@ package com.xah.shared.util
 
 import android.content.ContentResolver
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import com.xah.shared.result.DiffResult
 import com.xah.shared.util.InstallUtils.installApk
 import java.io.File

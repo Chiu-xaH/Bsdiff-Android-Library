@@ -26,14 +26,23 @@ Install the latest version of a recent old version of an ARM64 APK in [HFUT Sche
 
 In `settings.gradle` add:
 
+Groovy
 ```Groovy
-maven { url 'https://jitpack.io' }
+maven { 
+    url 'https://jitpack.io'
+}
+```
+Kotlin
+```Kotlin
+maven {
+    url = uri("https://jitpack.io")
+}
 ```
 
 Add dependency (version is based on the Tag):
 
 ```Groovy
-implementation("com.github.Chiu-xaH:diff-updater:XXX")
+implementation("com.github.Chiu-xaH:DiffUpdater:2.0-dev01")
 ```
 
 ### Configure FileProvider
@@ -467,4 +476,7 @@ If you need to customize, developers can import the **core** module, which only 
 * Bsdiff
 * HPatchDiff
 
-
+### Old Version
+```Kotlin
+implementation("com.github.Chiu-xaH:Bsdiff-Android-Library:1.0.3")
+```

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")
 }
 
 android {
@@ -32,6 +33,18 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
     implementation(libs.androidx.core.ktx)
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                groupId = libs.versions.libraryPackageName.get()
+                version = libs.versions.libraryVersionName.get()
+                artifactId = "shared"
+                from(components["release"])
+            }
+        }
+    }
 }

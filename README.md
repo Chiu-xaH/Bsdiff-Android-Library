@@ -1,6 +1,6 @@
 # DiffUpdater (Android Library) 
 
-[![](https://jitpack.io/v/Chiu-xaH/Bsdiff-Android-Library.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
+[![](https://jitpack.io/v/Chiu-xaH/DiffUpdater.svg)](https://jitpack.io/#Chiu-xaH/Bsdiff-Android-Library)
 
 [English](README_en.md) | 中文
 
@@ -23,12 +23,21 @@
 
 ### 引入依赖
 在settings.gradle添加
+Groovy使用
 ```Groovy
-maven { url 'https://jitpack.io' }
+maven { 
+    url 'https://jitpack.io'
+}
+```
+Kotlin使用
+```Kotlin
+maven {
+    url = uri("https://jitpack.io")
+}
 ```
 添加依赖，版本以Tag为准
 ```Groovy
-implementation("com.github.Chiu-xaH:diff-updater:XXX")
+implementation("com.github.Chiu-xaH:DiffUpdater:2.0-dev01")
 ```
 
 ### 配置FileProvider
@@ -422,3 +431,7 @@ fun PatchUpdateUI(
 ### 开源致谢
 - Bsdiff
 - HPatchDiff
+### 旧版本
+```Kotlin
+implementation("com.github.Chiu-xaH:Bsdiff-Android-Library:1.0.3")
+```
