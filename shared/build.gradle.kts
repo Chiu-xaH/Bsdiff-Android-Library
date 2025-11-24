@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.xah.shared"
+    namespace = libs.versions.libraryPackageName.get() + ".shared"
     compileSdk = Integer.parseInt(libs.versions.maxSdkVersion.get())
 
     defaultConfig {

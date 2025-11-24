@@ -1,6 +1,6 @@
 [versions]
-libraryVersionName = "2.0-dev1615"
-libraryPackageName = "com.xah.bsdiff"
+libraryVersionName = "2.0-dev1636"
+libraryPackageName = "com.xah.diff"
 maxSdkVersion = "36"
 minSdkVersion = "24"
 agp = "8.9.3"

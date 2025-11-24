@@ -17,10 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.xah.bsdiffs.test.util.AppVersion
-import com.xah.patch.diff.DiffUpdate
-import com.xah.patch.diff.model.DiffType
-import com.xah.shared.util.queryName
-import com.xah.shared.util.uriToFile
+import com.xah.diff.patch.DiffUpdate
+import com.xah.diff.patch.model.DiffType
+import com.xah.diff.shared.util.queryName
+import com.xah.diff.shared.util.uriToFile
 import kotlinx.coroutines.launch
 
 @Composable

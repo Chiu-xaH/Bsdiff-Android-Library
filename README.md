@@ -187,7 +187,7 @@ enum class DiffErrorCode(val code: Int) {
     MD5_MISMATCH(1003), // MD5校验不通过
 }
 ```
-mergedDefaultFunction函数是库预设的回调处理，失败时使用Log.e打印并Toast，成功时安装新Apk
+mergedDefaultFunction是DifferUpdate类中的静态函数，库预设的回调处理，失败时使用Log.e打印并Toast，成功时安装新Apk
 ```Kotlin
 // 合并完成后的默认操作
 fun mergedDefaultFunction(

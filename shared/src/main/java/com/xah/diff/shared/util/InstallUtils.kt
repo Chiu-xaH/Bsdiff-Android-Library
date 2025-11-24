@@ -1,4 +1,4 @@
-package com.xah.shared.util
+package com.xah.diff.shared.util
 
 import android.content.Context
 import android.content.Intent

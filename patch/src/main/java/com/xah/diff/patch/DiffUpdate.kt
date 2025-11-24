@@ -1,22 +1,23 @@
-package com.xah.patch.diff
+package com.xah.diff.patch
 
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.bsdiff.core.BsdiffJni
+import com.xah.diff.core.BsdiffJni
 import com.github.sisong.HPatch
-import com.xah.patch.diff.model.DiffContent
-import com.xah.patch.diff.model.DiffType
-import com.xah.shared.result.DiffError
-import com.xah.shared.result.DiffErrorCode
-import com.xah.shared.result.DiffResult
-import com.xah.shared.util.InstallUtils.installApk
-import com.xah.shared.util.copySourceApkTo
-import com.xah.shared.util.getMd5
-import com.xah.shared.util.mergedDefaultFunction
+import com.xah.diff.patch.model.DiffContent
+import com.xah.diff.patch.model.DiffType
+import com.xah.diff.shared.result.DiffError
+import com.xah.diff.shared.result.DiffErrorCode
+import com.xah.diff.shared.result.DiffResult
+import com.xah.diff.shared.util.InstallUtils.installApk
+import com.xah.diff.shared.util.getMd5
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
 
 class DiffUpdate(
     private val diffType : DiffType
@@ -33,6 +34,30 @@ class DiffUpdate(
 
     companion object {
         private const val CACHE_DIR = "diff_temp"
+
+        // 合并完成后的默认操作
+        fun mergedDefaultFunction(
+            result : DiffResult,
+            context: Context,
+            authority : String = ".provider",
+        ) {
+            when(result) {
+                is DiffResult.Success -> {
+                    val targetFile = result.file
+                    // 安装
+                    installApk (targetFile,context,authority) {
+                        Toast.makeText(context,"Not found target apk to install", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                is DiffResult.Error -> {
+                    // 错误
+                    val error = result.error
+                    Log.e("DiffUpdate","code: " + error.code + "\nmessage: " + error.message)
+                    Toast.makeText(context,error.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
 
         // 建立并返回工作目录
         private fun getPatchCacheDir(context: Context): File {
@@ -71,6 +96,34 @@ class DiffUpdate(
         val md5 = getMd5(targetFile)
         return md5 == diffContent.targetFileMd5
     }
+
+    // 将源Apk复制到工作目录
+    private fun copySourceApkTo(context: Context,destDir : File): File? {
+        val sourceApk = File(context.packageCodePath)
+        // 使用固定名称，保证只有一个 防止重复复制
+        val destFile = File(destDir, "source.apk")
+
+        return try {
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            // 如果文件已经存在，就不再重复复制
+            if (!destFile.exists()) {
+                FileInputStream(sourceApk).channel.use { input ->
+                    FileOutputStream(destFile).channel.use { output ->
+                        input.transferTo(0, input.size(), output)
+                    }
+                }
+            }
+
+            destFile
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
+        }
+    }
+
 
     // 合并补丁包
     suspend fun merge (

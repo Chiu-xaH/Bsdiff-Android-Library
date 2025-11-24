@@ -1,4 +1,4 @@
-package com.xah.shared.util
+package com.xah.diff.shared.util
 
 import android.content.ContentResolver
 import android.content.Context
@@ -6,8 +6,8 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
-import com.xah.shared.result.DiffResult
-import com.xah.shared.util.InstallUtils.installApk
+import com.xah.diff.shared.result.DiffResult
+import com.xah.diff.shared.util.InstallUtils.installApk
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -26,57 +26,6 @@ fun getMd5(file: File): String {
     }
     return md.digest().joinToString("") { "%02x".format(it) }
 }
-
-// 将源Apk复制到工作目录
-fun copySourceApkTo(context: Context,destDir : File): File? {
-    val sourceApk = File(context.packageCodePath)
-    // 使用固定名称，保证只有一个 防止重复复制
-    val destFile = File(destDir, "source.apk")
-
-    return try {
-        if (!destDir.exists()) {
-            destDir.mkdirs()
-        }
-
-        // 如果文件已经存在，就不再重复复制
-        if (!destFile.exists()) {
-            FileInputStream(sourceApk).channel.use { input ->
-                FileOutputStream(destFile).channel.use { output ->
-                    input.transferTo(0, input.size(), output)
-                }
-            }
-        }
-
-        destFile
-    } catch (e: IOException) {
-        e.printStackTrace()
-        null
-    }
-}
-
-// 合并完成后的默认操作
-fun mergedDefaultFunction(
-    result : DiffResult,
-    context: Context,
-    authority : String = ".provider",
-) {
-    when(result) {
-        is DiffResult.Success -> {
-            val targetFile = result.file
-            // 安装
-            installApk (targetFile,context,authority) {
-                Toast.makeText(context,"Not found target apk to install", Toast.LENGTH_SHORT).show()
-            }
-        }
-        is DiffResult.Error -> {
-            // 错误
-            val error = result.error
-            Log.e("DiffUpdate","code: " + error.code + "\nmessage: " + error.message)
-            Toast.makeText(context,error.message, Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
 
 fun uriToFile(context: Context, uri: Uri): File? {
     val contentResolver = context.contentResolver

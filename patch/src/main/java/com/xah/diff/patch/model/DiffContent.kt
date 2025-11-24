@@ -1,4 +1,4 @@
-package com.xah.patch.diff.model
+package com.xah.diff.patch.model
 
 import java.io.File
 

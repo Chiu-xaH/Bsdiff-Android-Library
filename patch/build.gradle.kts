@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.xah.patch.diff"
+    namespace = libs.versions.libraryPackageName.get() + ".patch"
     compileSdk = Integer.parseInt(libs.versions.maxSdkVersion.get())
 
     defaultConfig {

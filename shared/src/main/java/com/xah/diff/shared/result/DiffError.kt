@@ -1,4 +1,4 @@
-package com.xah.shared.result
+package com.xah.diff.shared.result
 
 data class DiffError(
     val code: DiffErrorCode,

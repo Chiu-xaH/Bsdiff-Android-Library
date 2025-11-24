@@ -1,4 +1,4 @@
-package com.xah.shared.download
+package com.xah.diff.shared.download
 
 import android.app.DownloadManager
 import android.content.Context
@@ -6,8 +6,8 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
-import com.xah.shared.download.model.DownloadResult
-import com.xah.shared.util.getMd5
+import com.xah.diff.shared.download.model.DownloadResult
+import com.xah.diff.shared.util.getMd5
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

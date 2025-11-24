@@ -1,4 +1,4 @@
-package com.xah.shared.result
+package com.xah.diff.shared.result
 
 enum class DiffErrorCode(val code: Int) {
     SOURCE_APK_NOT_FOUND(1000),// 源Apk在工作目录内未找到，可能是复制Apk时出现问题

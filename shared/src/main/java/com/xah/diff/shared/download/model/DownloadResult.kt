@@ -1,4 +1,4 @@
-package com.xah.shared.download.model
+package com.xah.diff.shared.download.model
 
 import android.net.Uri
 import java.io.File

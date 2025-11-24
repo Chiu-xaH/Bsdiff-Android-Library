@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.bsdiff.core"
+    namespace = libs.versions.libraryPackageName.get() + ".core"
     compileSdk = Integer.parseInt(libs.versions.maxSdkVersion.get())
 
     defaultConfig {
