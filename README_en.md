@@ -6,6 +6,9 @@ English | [中文](README.md)
 
 An Android library that integrates incremental update functionality. Developers simply pass the patch package's `java.io.File` (hereafter referred to as File) to merge and install it.
 
+Sponsor — UpgradeLink
+<img src="/img/upgradelink.png" alt="UpgradeLink" height="54">
+
 ## Practical Application Case
 
 Install the latest version of a recent old version of an ARM64 APK in [HFUT Schedule](https://github.com/Chiu-xaH/HFUT-Schedule/releases) ([Video Demo](/img/example.mp4))
